@@ -40,6 +40,36 @@ class RAGBase:
             filter_dict=filter_dict
         )
 
+    def elastic_search(self, query, index_name="course-questions", num_results=5):
+        search_query = {
+            "size": num_results,
+            "query": {
+                "bool": {
+                    "must": {
+                        "multi_match": {
+                            "query": query,
+                            "fields": ["question^3", "section"],
+                            "type": "best_fields"
+                        }
+                    },
+                    "filter": {
+                        "term": {
+                            "course": self.course
+                        }
+                    }
+                }
+            }
+        }
+
+        response = self.index.search(
+            index=index_name,
+            body=search_query
+        )
+
+        return [doc['_source'] for doc in response['hits']['hits']]
+                
+        
+
     def build_context(self, search_results):
         lines = []
 
@@ -72,7 +102,8 @@ class RAGBase:
         return response.output_text
 
     def rag(self, query):
-        search_results = self.search(query)
+        #search_results = self.search(query)
+        search_results = self.elastic_search(query)
         prompt = self.build_prompt(query, search_results)
         answer = self.llm(prompt)
 

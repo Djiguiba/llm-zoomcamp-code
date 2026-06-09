@@ -2,6 +2,8 @@
 
 import requests
 from minsearch import Index
+from elasticsearch import Elasticsearch
+from tqdm.auto import tqdm
 
 
 def load_faq_data():
@@ -31,3 +33,37 @@ def build_index(documents):
     )
     index.fit(documents)
     return index
+
+
+def build_elastic_index(documents):
+    index_settings = index_settings = {
+        "settings": {
+            "number_of_shards": 1,
+            "number_of_replicas": 0
+        },
+        "mappings": {
+            "properties": {
+                #"text": {"type": "text"},
+                "section": {"type": "text"},
+                "question": {"type": "text"},
+                "course": {"type": "keyword"} 
+            }
+        }
+    }
+    index_name = "course-questions"
+    
+    elastic_client = Elasticsearch("http://localhost:9200")
+    elastic_client.indices.create(
+        index=index_name,
+        body=index_settings
+    )
+
+    for doc in tqdm(documents):
+        elastic_client.index(
+            index=index_name,
+            document=doc
+        )
+
+    return elastic_client
+    
+    
