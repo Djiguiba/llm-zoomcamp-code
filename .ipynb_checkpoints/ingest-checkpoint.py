@@ -33,7 +33,7 @@ def build_index(documents):
     )
     index.fit(documents)
     return index
-
+    
 
 def build_elastic_index(documents):
     index_settings = index_settings = {
