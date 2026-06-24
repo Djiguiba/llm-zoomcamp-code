@@ -1,0 +1,56 @@
+volumes:
+  kestra_data:
+    driver: local
+  kestra_tmp:
+    driver: local
+
+services:
+  kestra:
+    image: kestra/kestra:v1.3.21
+    env_file:
+      - ../.env_encoded
+    pull_policy: always
+    user: "root"
+    command: server standalone
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Accès à l'hôte depuis Docker
+    volumes:
+      - kestra_data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://host.docker.internal:5432/kestra # IP de l'hôte pour accéder à PostgreSQL
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: k3str4
+        kestra:
+          server:
+            basicAuth:
+              username: "yann.djiguiba23@inphb.ci"
+              password: Believe-in@33#
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              basePath: "/app/storage"
+          queue:
+            type: postgres
+          tasks:
+            tmpDir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8080/
+          ai:
+            providers:
+              - id: gemini
+                display-name: Gemini - Private
+                type: gemini
+                configuration:
+                  model-name: gemini-2.5-flash
+                  api-key: {{ secret('GEMINI_API_KEY') }}
+    ports:
+      - "8080:8080"
+      - "8081:8081"
