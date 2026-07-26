@@ -21,23 +21,25 @@ class RAGBase:
                  instructions=INSTRUCTIONS,
                  prompt_template=PROMPT_TEMPLATE,
                  course="llm-zoomcamp",
-                 model="gpt-5.4-mini"):
+                 model="claude-haiku-4-5",
+                 max_tokens=1000):
         self.index = index
         self.llm_client = llm_client
         self.instructions = instructions
         self.prompt_template = prompt_template
         self.course = course
         self.model = model
+        self.max_tokens = max_tokens
 
     def search(self, query, num_results=5):
-        boost_dict = {"question": 3.0, "section": 0.5}
-        filter_dict = {"course": self.course}
+        #boost_dict = {"question": 3.0, "section": 0.5}
+        #filter_dict = {"course": self.course}
 
         return self.index.search(
             query,
             num_results=num_results,
-            boost_dict=boost_dict,
-            filter_dict=filter_dict
+            #boost_dict=boost_dict,
+            #filter_dict=filter_dict
         )
 
     def elastic_search(self, query, index_name="course-questions", num_results=5):
@@ -83,10 +85,11 @@ class RAGBase:
 
 
     def build_prompt(self, query, search_results):
-        context = self.build_context(search_results)
+        #context = self.build_context(search_results)
         return self.prompt_template.format(
             question=query,
-            context=context
+            context=search_results,
+            #context=context
         )
 
     def llm(self, prompt):
@@ -98,7 +101,7 @@ class RAGBase:
         response = self.llm_client.messages.create( # replace messages method by responses if you use openai client 
             model=self.model,
             system=self.instructions,
-            max_tokens=1000,
+            max_tokens=self.max_tokens,
             messages=input_message # replace messages attribut by input if you use openai client
         )
         return response
@@ -109,7 +112,7 @@ class RAGBase:
         prompt = self.build_prompt(query, search_results)
         answer = self.llm(prompt)
 
-        return answer
+        return answer.content[0].text
 
 
 class RAGVector(RAGBase):
@@ -157,6 +160,4 @@ class RAGPgVector(RAGBase):
             {"course": r[0], "section": r[1], "question": r[2], "answer": r[3]}
             for r in results
         ]
-
-    
         
