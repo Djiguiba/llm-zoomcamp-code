@@ -29,7 +29,7 @@ def calc_total_price(usages):
     return total_cost
 
 
-def llm_structured(client, instructions, user_prompt, output_type, model="claude-haiku-4-5"):
+def llm_structured(client, instructions, user_prompt, output_type, model="claude-haiku-4-5", max_tokens=1000):
     messages = [
         {"role": "user", "content": user_prompt}
     ]
@@ -38,7 +38,7 @@ def llm_structured(client, instructions, user_prompt, output_type, model="claude
         model=model,
         system=instructions,
         messages=messages,
-        max_tokens=1024,
+        max_tokens=max_tokens,
         output_format=output_type
     )
 
@@ -97,6 +97,7 @@ class RAGWithUsage(RAGBase):
 
         response = self.llm_client.messages.create(
             model=self.model,
+            max_tokens=self.max_tokens,
             system=self.instructions,
             messages=input_messages
         )
