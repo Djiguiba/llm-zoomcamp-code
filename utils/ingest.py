@@ -1,7 +1,7 @@
 """ Loading Data and Building the search index """
 
 import requests
-from minsearch import Index
+from minsearch import Index, VectorSearch
 from elasticsearch import Elasticsearch
 from tqdm.auto import tqdm
 
@@ -33,6 +33,14 @@ def build_index(documents):
     )
     index.fit(documents)
     return index
+    
+
+def build_vindex(documents, vectors):
+    vindex = VectorSearch(
+        keyword_fields=['course']
+    )
+    vindex.fit(vectors, documents)
+    return vindex
     
 
 def build_elastic_index(documents):
