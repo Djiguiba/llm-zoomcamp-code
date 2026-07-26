@@ -23,12 +23,14 @@ class RAGBase:
         llm_client,
         instructions=INSTRUCTIONS,
         prompt_template=PROMPT_TEMPLATE,
-        model='gpt-5.4-mini'
+        max_tokens = 1024,
+        model='claude-haiku-4-5'
     ):
         self.index = index
         self.llm_client = llm_client
         self.instructions = instructions
         self.prompt_template = prompt_template
+        self.max_tokens = max_tokens
         self.model = model
 
     def search(self, query, num_results=5):
@@ -51,20 +53,20 @@ class RAGBase:
         )
 
     def llm(self, prompt):
-        input_messages = [
-            {'role': 'developer', 'content': self.instructions},
-            {'role': 'user', 'content': prompt}
+        input_message = [
+            {"role": "user", "content": prompt}
         ]
 
-        response = self.llm_client.responses.create(
+        response = self.llm_client.messages.create( 
             model=self.model,
-            input=input_messages
+            system=self.instructions,
+            max_tokens=self.max_tokens,
+            messages=input_message
         )
-
         return response
 
     def rag(self, query):
         search_results = self.search(query)
         prompt = self.build_prompt(query, search_results)
         response = self.llm(prompt)
-        return response.output_text
+        return response.content[0].text
